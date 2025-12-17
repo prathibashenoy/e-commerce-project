@@ -1,38 +1,44 @@
-import mongoose from 'mongoose';
+//models/Users.js
+
+import mongoose from "mongoose";
+import bcrypt from "bcryptjs";
 
 const userSchema = new mongoose.Schema(
   {
-    id: { 
-      type: String, 
-      required: true 
-    }, 
-    name: {
+    username: {
       type: String,
       required: true,
-      trim: true
+      trim: true,
     },
     email: {
       type: String,
       required: true,
-      unique: true
-      
+      unique: true,
+      lowercase: true,
     },
     password: {
       type: String,
-      required: true
+      required: true,
     },
     role: {
       type: String,
-      enum: ['user', 'admin'],
-      default: 'user'
+      enum: ["admin", "customer"],
+      default: "customer",
     },
   },
-  {
-    timestamps: true, // adds createdAt and updatedAt fields
-  }
+  { timestamps: true }
 );
 
-// Create the model from the schema
-const User = mongoose.model('User', userSchema);
+// Hash password before save
+userSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) return next();
+  this.password = await bcrypt.hash(this.password, 10);
+  next();
+});
 
-export default User;
+// Compare password
+userSchema.methods.matchPassword = async function (enteredPassword) {
+  return await bcrypt.compare(enteredPassword, this.password);
+};
+
+export default mongoose.model("User", userSchema);

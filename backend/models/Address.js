@@ -1,14 +1,11 @@
+//models/Address.js
+
 import mongoose from "mongoose";
 
 const addressSchema = new mongoose.Schema({
-  id: { 
-    type: String, 
-    required: true, 
-    unique: true, 
-    trim: true 
-  },
+
   User_id: { 
-    type: String, 
+    type: mongoose.Schema.Types.ObjectId, 
     ref: "User", 
     required: true, 
     index: true // faster lookup for user’s addresses

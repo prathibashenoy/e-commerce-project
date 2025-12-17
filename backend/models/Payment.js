@@ -1,12 +1,7 @@
 import mongoose from "mongoose";
 
 const paymentSchema = new mongoose.Schema({
-  id: {
-    type: String,
-    required: true,
-    unique: true,
-    trim: true
-  },
+ 
   Order_id: {
     type: String,
     ref: "Order", // reference to Order collection

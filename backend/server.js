@@ -1,12 +1,33 @@
-import app from "./app.js";
-import dotenv from 'dotenv';
-import connectDB from "./config/db.js";
+import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
 
-dotenv.config()
+import userRoutes from "./routes/userRoutes.js";
+// import other routes...
 
-const PORT = process.env.PORT
+dotenv.config();
 
-connectDB()
+const app = express();
 
+/* ✅ CORS */
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "https://YOUR-FRONTEND.vercel.app", // replace later
+    ],
+    credentials: true,
+  })
+);
 
-app.listen(PORT, () => console.log(`server running on ${PORT}`))
+/* ✅ Body parser */
+app.use(express.json());
+
+/* ✅ Routes */
+app.use("/api/users", userRoutes);
+// app.use("/api/products", productRoutes);
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
