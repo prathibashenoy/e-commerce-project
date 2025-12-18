@@ -1,3 +1,4 @@
+// models/Orders.js - FIXED VERSION
 import mongoose from "mongoose";
 
 const orderSchema = new mongoose.Schema(
@@ -22,6 +23,11 @@ const orderSchema = new mongoose.Schema(
     paymentStatus: {
       type: String,
       default: "Paid",
+    },
+    stripeSessionId: {
+      type: String,
+      required: true,
+      unique: true, // Prevent duplicate orders
     },
   },
   { timestamps: true }

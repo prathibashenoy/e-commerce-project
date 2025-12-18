@@ -1,27 +1,28 @@
-// backend/routes/paymentRouter.js
+// backend/routes/paymentRoutes.js
 import express from "express";
 import Stripe from "stripe";
-import { authMiddleware } from "../middlewares/authMiddleware.js";
 import Order from "../models/Orders.js";
 import { sendOrderSuccessEmail } from "../utils/sendEmail.js";
+import dotenv from "dotenv";
+import { authMiddleware } from "../middlewares/authMiddleware.js";
+
+dotenv.config({ path: "./.env" });
 
 const paymentRouter = express.Router();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-// 1️⃣ CREATE CHECKOUT SESSION
+// 1️⃣ Create Checkout Session
 paymentRouter.post("/create-checkout-session", authMiddleware, async (req, res) => {
   try {
     const { cartItems } = req.body;
-
-    if (!cartItems || cartItems.length === 0) {
-        return res.status(400).json({ message: "Cart is empty" });
-      }
+    if (!cartItems || cartItems.length === 0)
+      return res.status(400).json({ message: "Cart is empty" });
 
     const line_items = cartItems.map((item) => ({
       price_data: {
         currency: "inr",
         product_data: { name: item.name },
-        unit_amount: item.price * 100, // paise
+        unit_amount: item.price * 100,
       },
       quantity: item.quantity,
     }));
@@ -33,7 +34,6 @@ paymentRouter.post("/create-checkout-session", authMiddleware, async (req, res) 
       mode: "payment",
       line_items,
       metadata: {
-        
         userId: req.user._id.toString(),
         cartItems: JSON.stringify(cartItems),
         totalAmount: totalAmount.toString(),
@@ -44,47 +44,53 @@ paymentRouter.post("/create-checkout-session", authMiddleware, async (req, res) 
 
     res.json({ url: session.url });
   } catch (err) {
-    console.error("Stripe Error:",err);
-    res.status(500).json({ message: "Payment failed" });
+    console.error("Stripe Error:", err);
+    res.status(500).json({ message: "Payment failed", error: err.message });
   }
 });
 
-// 2️⃣ PAYMENT SUCCESS (VERIFY + ORDER + EMAIL)
-paymentRouter.post("/payment-success", authMiddleware, async (req, res) => {
+// 2️⃣ Payment Success Verification (public route)
+paymentRouter.get("/payment-success", async (req, res) => {
   try {
-    const { sessionId } = req.body;
+    const { session_id } = req.query;
+    if (!session_id) return res.status(400).json({ message: "Session ID required" });
 
-    // Verify Stripe payment
-    const session = await stripe.checkout.sessions.retrieve(sessionId);
-
+    // Retrieve Stripe session
+    const session = await stripe.checkout.sessions.retrieve(session_id);
     if (session.payment_status !== "paid") {
       return res.status(400).json({ message: "Payment not verified" });
     }
 
-    // Prevent duplicate order
-    const existingOrder = await Order.findOne({ stripeSessionId: sessionId });
-    if (existingOrder) return res.json({ message: "Order already exists" });
+    // Check duplicate
+    const existingOrder = await Order.findOne({ stripeSessionId: session_id });
+    if (existingOrder) return res.json({ message: "Order already exists", order: existingOrder });
 
-    // Get cart info from metadata
+    // Parse cart data
     const cartItems = JSON.parse(session.metadata.cartItems);
     const totalAmount = parseFloat(session.metadata.totalAmount);
 
     // Create order
     const order = await Order.create({
-      user: req.user._id,
+      user: session.metadata.userId,
       items: cartItems,
       totalAmount,
       paymentStatus: "Paid",
-      stripeSessionId: sessionId,
+      stripeSessionId: session_id,
     });
 
-    // Send order confirmation email
-    await sendOrderSuccessEmail(req.user, order);
+    // Send email (optional)
+    if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+      try {
+        await sendOrderSuccessEmail({ email: session.customer_email }, order);
+      } catch (err) {
+        console.warn("Email not sent:", err.message);
+      }
+    }
 
-    res.status(201).json({ message: "Order placed & email sent", order });
+    res.json({ message: "Payment verified", order });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Order failed" });
+    console.error("Payment Success Error:", err.message);
+    res.status(500).json({ message: "Server error", error: err.message });
   }
 });
 

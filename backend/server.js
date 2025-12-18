@@ -8,6 +8,7 @@ import connectDB from "./config/db.js";
 // Routes
 import UserRouter from "./routes/userRoutes.js";
 import paymentRouter from "./routes/paymentRoutes.js"; // make sure this file exists
+import categoryRoutes from "./routes/categoryRoutes.js";
 
 const app = express();
 
@@ -35,6 +36,10 @@ app.get("/api/test", (req, res) => {
 // ✅ Routes
 app.use("/api/users", UserRouter);
 app.use("/api/payments", paymentRouter); // mounted payment routes
+
+
+app.use("/api/category", categoryRoutes);
+
 
 // ✅ Root route
 app.get("/", (req, res) => {
