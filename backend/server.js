@@ -13,7 +13,7 @@ const app = express();
 
 // ✅ Connect to MongoDB
 connectDB();
-const cors = require('cors');
+
 
 // Allow requests from your frontend URL only:
 app.use(cors({
