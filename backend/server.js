@@ -14,7 +14,6 @@ const app = express();
 // ✅ Connect to MongoDB
 connectDB();
 
-
 // Allow requests from your frontend URL only:
 app.use(cors({
   origin: 'https://e-commerce-project-swart.vercel.app',
@@ -28,6 +27,10 @@ app.use(cors({
 
 // ✅ Body parser
 app.use(express.json());
+
+app.get("/api/test", (req, res) => {
+  res.json({ message: "Backend is running!" });
+});
 
 // ✅ Routes
 app.use("/api/users", UserRouter);
