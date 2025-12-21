@@ -1,45 +1,56 @@
 import dotenv from "dotenv";
 dotenv.config({ path: "./.env" });
-console.log("ENV CHECK (Stripe key):", process.env.STRIPE_SECRET_KEY);
+
 import express from "express";
 import cors from "cors";
 import connectDB from "./config/db.js";
 
 // Routes
 import UserRouter from "./routes/userRoutes.js";
-import paymentRouter from "./routes/paymentRoutes.js"; // make sure this file exists
-import categoryRoutes from "./routes/categoryRoutes.js";
+import paymentRouter from "./routes/paymentRoutes.js";
+import categoryRouter from "./routes/categoryRoutes.js";
 
 const app = express();
 
 // ✅ Connect to MongoDB
 connectDB();
 
-// Allow requests from your frontend URL only:
-app.use(cors({
-  origin: 'https://e-commerce-project-swart.vercel.app',
-  methods: 'GET,POST,PUT,DELETE',
-  credentials: true
-}));
+// ✅ Allowed frontend origins (Vercel)
+const allowedOrigins = [
+  "https://e-commerce-project-sb2a.vercel.app",
+  "https://e-commerce-project-swart.vercel.app"
+];
 
-// Or to allow all origins (less secure, but quick test):
-// app.use(cors());
+// ✅ CORS middleware (FIXED)
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      // Allow server-to-server / Postman requests (no origin)
+      if (!origin) return callback(null, true);
 
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    methods: "GET,POST,PUT,DELETE",
+    credentials: true
+  })
+);
 
 // ✅ Body parser
 app.use(express.json());
 
+// ✅ Test route
 app.get("/api/test", (req, res) => {
   res.json({ message: "Backend is running!" });
 });
 
 // ✅ Routes
 app.use("/api/users", UserRouter);
-app.use("/api/payments", paymentRouter); // mounted payment routes
-
-
-app.use("/api/category", categoryRoutes);
-
+app.use("/api/payments", paymentRouter);
+app.use("/api/category", categoryRouter);
 
 // ✅ Root route
 app.get("/", (req, res) => {
