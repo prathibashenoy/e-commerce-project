@@ -1,5 +1,5 @@
 //import dotenv from "dotenv";
-
+/*
 
 import express from 'express';
 import userRoutes from "./routes/userRoutes.js"; 
@@ -21,6 +21,8 @@ import orderItemRoutes from "./routes/orderitemRoutes.js";
 import cartRoutes from "./routes/cartRoutes.js"; 
 import cartitemRoutes from "./routes/cartitemRoutes.js"; 
  */
+
+/*
 import cors from "cors";
 
 import path from 'path';
@@ -54,9 +56,13 @@ app.use("/api/orderitem",orderitemRoutes)
 app.use("/api/cart",cartRoutes)
 app.use("cartitem",cartitemRoutes)
 */
-
+/*
 app.get("/", (req, res) => {
   res.send("API is running successfully...");
 });
 
 export default app;
+
+
+
+*/
