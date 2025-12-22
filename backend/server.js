@@ -9,6 +9,7 @@ import connectDB from "./config/db.js";
 import UserRouter from "./routes/userRoutes.js";
 import paymentRouter from "./routes/paymentRoutes.js";
 import categoryRouter from "./routes/categoryRoutes.js";
+import productRouter from "./routes/productRoutes.js";
 
 import path from "path";
 import { fileURLToPath } from "url";
@@ -63,6 +64,7 @@ app.get("/api/test", (req, res) => {
 app.use("/api/users", UserRouter);
 app.use("/api/payments", paymentRouter);
 app.use("/api/category", categoryRouter);
+app.use("/api/product", productRouter);
 
 // ✅ Root route
 app.get("/", (req, res) => {
