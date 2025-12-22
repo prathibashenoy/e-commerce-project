@@ -10,7 +10,15 @@ import UserRouter from "./routes/userRoutes.js";
 import paymentRouter from "./routes/paymentRoutes.js";
 import categoryRouter from "./routes/categoryRoutes.js";
 
+import path from "path";
+import { fileURLToPath } from "url";
+
+
 const app = express();
+
+// ES module dirname fix
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // ✅ Connect to MongoDB
 connectDB();
@@ -18,7 +26,7 @@ connectDB();
 // ✅ Allowed frontend origins (Vercel)
 const allowedOrigins = [
   "https://e-commerce-project-sb2a.vercel.app",
-  "https://e-commerce-project-swart.vercel.app"
+  //"https://e-commerce-project-swart.vercel.app"
 ];
 
 // ✅ CORS middleware (FIXED)
@@ -41,6 +49,10 @@ app.use(
 
 // ✅ Body parser
 app.use(express.json());
+
+
+// ✅ STATIC UPLOADS (THIS FIXES YOUR ISSUE)
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // ✅ Test route
 app.get("/api/test", (req, res) => {
