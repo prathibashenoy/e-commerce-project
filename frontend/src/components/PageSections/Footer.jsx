@@ -44,9 +44,9 @@ function Footer(){
                <div className='pt-7 flex flex-col text-gray-600'>
                   <h1 className='font-bold '>FOLLOW US</h1>
                   <div className='pt-5 flex flex-row gap-5'>
-                    <img src="./icons/insta.png" alt="instagram image" />
-                    <img src="./icons/facebook.png" alt="facebook image" />
-                    <img src="./icons/twitter.png" alt="twitter image" />
+                    <img src="/icons/insta.png" alt="instagram image" />
+                    <img src="/icons/facebook.png" alt="facebook image" />
+                    <img src="/icons/twitter.png" alt="twitter image" />
                   </div>
                   <p className='font-bold pt-5'>Receive exclusive offers in your mailbox</p>
                   <div className='flex flex-row pt-5'>                        
