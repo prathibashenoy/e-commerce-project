@@ -29,7 +29,7 @@ const Checkout = () => {
     try {
       setLoading(true);
       const res = await axios.post(
-        `${API_URL}/api/payments/create-checkout-session`,
+        `${API_URL}/api/payment/create-checkout-session`,
         { cartItems },
         { headers: { Authorization: `Bearer ${token}` } }
       );
