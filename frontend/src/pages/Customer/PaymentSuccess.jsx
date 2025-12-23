@@ -12,7 +12,8 @@ const PaymentSuccess = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const session_id = searchParams.get("session_id");
-  const hasRun = useRef(false); // prevent double API call (StrictMode)
+
+  const hasRun = useRef(false); // 🚫 prevent double execution
 
   useEffect(() => {
     if (hasRun.current) return;
@@ -26,47 +27,47 @@ const PaymentSuccess = () => {
 
       try {
         const res = await axios.get(
-          `${API_URL}/api/payments/payment-success?session_id=${session_id}`,
-          { timeout: 15000 }
+          `${API_URL}/api/payments/payment-success?session_id=${session_id}`
         );
 
         const isSuccess =
-          res.data.success || res.data.message === "Order already exists";
+          res.data.message === "Payment verified" ||
+          res.data.message === "Order already exists";
 
-        if (!isSuccess) throw new Error(res.data.message);
+        if (isSuccess) {
+          dispatch(clearCart());
 
-        // ✅ Clear cart only on success
-        dispatch(clearCart());
+          const orderId =
+            res.data.order?._id ||
+            res.data.orderId ||
+            "N/A";
 
-        const orderId =
-          res.data.orderId || res.data.order?._id || "N/A";
+          await Swal.fire({
+            icon: "success",
+            title: "Payment Successful 🎉",
+            html: `
+              <p>Your order has been placed successfully.</p>
+              <p style="margin-top:10px;">
+                <strong>Order ID:</strong>
+                <span style="color:#2563eb;"> ${orderId}</span>
+              </p>
+            `,
+            confirmButtonText: "View My Orders",
+          });
 
-        await Swal.fire({
-          icon: "success",
-          title: "Payment Successful 🎉",
-          html: `
-            <p>Your order has been placed successfully.</p>
-            <p style="margin-top:10px;">
-              <strong>Order ID:</strong>
-              <span style="color:#2563eb;"> ${orderId}</span>
-            </p>
-            <p style="margin-top:8px;">
-              A confirmation email has been sent to your email address.
-            </p>
-          `,
-          confirmButtonText: "View My Orders",
-        });
-
-        // ✅ Redirect to My Orders
-        navigate("/customer/my-orders");
+          navigate("/customer/my-orders");
+        } else {
+          throw new Error(res.data.message);
+        }
       } catch (error) {
-        console.error("Payment verification failed:", error);
+        console.error("Payment verification issue:", error);
 
+        // ⚠️ Render timeout / Stripe delay fallback
         Swal.fire({
           icon: "warning",
           title: "Payment Processing",
           text:
-            "Your payment may be successful. If the amount was debited, please check My Orders.",
+            "If your amount was debited, your order will appear in My Orders shortly.",
           confirmButtonText: "Go to My Orders",
         }).then(() => navigate("/customer/my-orders"));
       }
@@ -78,7 +79,7 @@ const PaymentSuccess = () => {
   return (
     <div className="max-w-xl mx-auto p-8 text-center">
       <h2 className="text-2xl font-bold mb-4">Processing Payment...</h2>
-      <p>Please wait while we verify your payment.</p>
+      <p>Please wait while we confirm your order.</p>
     </div>
   );
 };
