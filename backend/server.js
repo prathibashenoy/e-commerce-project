@@ -31,8 +31,8 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use(
   cors({
-    origin: "*", // (for now, later we can restrict)
-    credentials: true
+    origin: "*", // allow all origins for now
+    credentials: true,
   })
 );
 
@@ -56,5 +56,14 @@ app.get("/", (req, res) => {
   res.send("Backend is live 🚀");
 });
 
-/* ❌ NO app.listen() FOR VERCEL */
+/* ------------------ CONDITIONAL PORT LISTEN ------------------ */
+// Render (or any platform) needs a port; serverless platforms like Vercel do NOT
+if (process.env.NODE_ENV !== "vercel") {
+  const PORT = process.env.PORT || 5000;
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
+
+// Export app for serverless (Vercel, Netlify, etc.)
 export default app;
