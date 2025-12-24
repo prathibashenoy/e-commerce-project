@@ -27,7 +27,7 @@ const PaymentSuccess = () => {
 
       try {
         const res = await axios.get(
-          `${API_URL}/api/payments/payment-success?session_id=${session_id}`
+          `${API_URL}/api/payment/payment-success?session_id=${session_id}`
         );
 
         const isSuccess =
