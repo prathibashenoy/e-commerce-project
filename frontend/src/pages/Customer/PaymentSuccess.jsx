@@ -36,6 +36,8 @@ const PaymentSuccess = () => {
 
         if (isSuccess) {
           dispatch(clearCart());
+          const emailSent = res.data.emailSent;
+
 
           const orderId =
             res.data.order?._id ||
@@ -43,17 +45,27 @@ const PaymentSuccess = () => {
             "N/A";
 
           await Swal.fire({
-            icon: "success",
-            title: "Payment Successful 🎉",
-            html: `
-              <p>Your order has been placed successfully.</p>
-              <p style="margin-top:10px;">
-                <strong>Order ID:</strong>
-                <span style="color:#2563eb;"> ${orderId}</span>
-              </p>
-            `,
-            confirmButtonText: "View My Orders",
+             icon: "success",
+             title: "Payment Successful 🎉",
+             html: `
+               <p>Your order has been placed successfully.</p>
+               <p style="margin-top:10px;">
+               <strong>Order ID:</strong>
+               <span style="color:#2563eb;"> ${orderId}</span>
+               </p>
+              ${
+                 emailSent
+                 ? `<p style="margin-top:10px; color:green;">
+                 📧 Order confirmation email sent successfully!
+                 </p>`
+                 : `<p style="margin-top:10px; color:orange;">
+                 ⚠️ Order placed, but email could not be sent.
+                 </p>`
+               }
+             `,
+             confirmButtonText: "View My Orders",
           });
+
 
           navigate("/customer/my-orders");
         } else {
