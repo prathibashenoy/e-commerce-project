@@ -66,7 +66,12 @@ paymentRouter.get("/payment-success", async (req, res) => {
 
     // Check duplicate
     const existingOrder = await Order.findOne({ stripeSessionId: session_id });
-    if (existingOrder) return res.json({ message: "Order already exists", order: existingOrder });
+    if (existingOrder) 
+      return res.json({ 
+        message: "Order already exists", 
+        order: existingOrder,
+        emailSent: false, // already handled earlier
+      });
 
     // Parse cart data
     const cartItems = JSON.parse(session.metadata.cartItems);
@@ -78,21 +83,31 @@ paymentRouter.get("/payment-success", async (req, res) => {
       items: cartItems,
       totalAmount,
       paymentStatus: "Paid",
-      stripeSessionId: session_id,
+      stripeSessionId: session_id,  
     });
+
+    let emailSent = false;
 
     // Send email (optional)
     if (process.env.EMAIL_USER &&
         process.env.EMAIL_PASS &&
         session.customer_email) {
       try {
-        await sendOrderSuccessEmail({ email: session.customer_email, name: "Customer" }, order);
+        await sendOrderSuccessEmail(
+          { email: session.customer_email, name: "Customer" }, 
+          order
+        );
+        emailSent = true;
       } catch (err) {
         console.warn("Email not sent:", err.message);
       }
     }
 
-    res.json({ message: "Payment verified", order });
+    res.json({ 
+      message: "Payment verified", 
+      order,
+      emailSent // ⭐ send status to frontend
+     });
   } catch (err) {
     console.error("Payment Success Error:", err.message);
     res.status(500).json({ message: "Server error", error: err.message });
