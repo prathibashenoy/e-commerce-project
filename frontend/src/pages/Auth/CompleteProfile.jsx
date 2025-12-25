@@ -5,6 +5,7 @@ import { useAuth } from "../../context/AuthContext";
 import Header from "../../components/PageSections/Header";
 import Input from "../../components/forms/Input";
 import Button from "../../components/Button";
+import { API_URL } from "../../config";
 
 const CompleteProfile = () => {
   const { userId } = useParams();
