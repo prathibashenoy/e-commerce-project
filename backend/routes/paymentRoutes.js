@@ -32,6 +32,9 @@ paymentRouter.post("/create-checkout-session", authMiddleware, async (req, res) 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       mode: "payment",
+
+      customer_email: req.user.email, // ⭐ THIS FIXES EMAIL
+
       line_items,
       metadata: {
         userId: req.user._id.toString(),
@@ -79,9 +82,11 @@ paymentRouter.get("/payment-success", async (req, res) => {
     });
 
     // Send email (optional)
-    if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+    if (process.env.EMAIL_USER &&
+        process.env.EMAIL_PASS &&
+        session.customer_email) {
       try {
-        await sendOrderSuccessEmail({ email: session.customer_email }, order);
+        await sendOrderSuccessEmail({ email: session.customer_email, name: "Customer" }, order);
       } catch (err) {
         console.warn("Email not sent:", err.message);
       }
