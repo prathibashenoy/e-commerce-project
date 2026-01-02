@@ -11,15 +11,15 @@ const productSchema = new mongoose.Schema(
     },
 
     image: {
-      type: String,
-      default: "",
+      url: { type: String, required: true },
+      public_id: { type: String, required: true },
     },
 
     categorySlug: {
       type: String,
       required: true,
       index: true,
-      ref: "Category", // references category.slug
+      ref: "Category",
     },
 
     price: {
@@ -44,11 +44,10 @@ const productSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Populate virtual category by slug
 productSchema.virtual("category", {
   ref: "Category",
   localField: "categorySlug",
-  foreignField: "slug",
+  foreignField: "Slug",
   justOne: true,
 });
 

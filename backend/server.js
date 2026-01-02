@@ -3,8 +3,6 @@ dotenv.config();
 
 import express from "express";
 import cors from "cors";
-import path from "path";
-import { fileURLToPath } from "url";
 
 import connectDB from "./config/db.js";
 
@@ -18,10 +16,6 @@ import paymentRoutes from "./routes/paymentRoutes.js";
 
 const app = express();
 
-/* ------------------ FIX __dirname ------------------ */
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
 /* ------------------ DB ------------------ */
 connectDB();
 
@@ -31,13 +25,10 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use(
   cors({
-    origin: "*", // allow all origins for now
+    origin: "*",
     credentials: true,
   })
 );
-
-/* ------------------ STATIC FILES ------------------ */
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 /* ------------------ ROUTES ------------------ */
 app.get("/api", (req, res) => {
@@ -56,14 +47,10 @@ app.get("/", (req, res) => {
   res.send("Backend is live 🚀");
 });
 
-/* ------------------ CONDITIONAL PORT LISTEN ------------------ */
-// Render (or any platform) needs a port; serverless platforms like Vercel do NOT
-if (process.env.NODE_ENV !== "vercel") {
-  const PORT = process.env.PORT || 5000;
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-  });
-}
+/* ------------------ START SERVER ------------------ */
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
 
-// Export app for serverless (Vercel, Netlify, etc.)
 export default app;

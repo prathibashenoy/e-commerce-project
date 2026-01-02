@@ -1,50 +1,26 @@
-// controllers/categoryController.js
-
-import fs from "fs";
-import path from "path";
 import Category from "../models/Category.js";
-import Product from "../models/Products.js";
-import { MESSAGES } from "../constants/messages.js";
-import { STATUS } from "../constants/httpStatus.js";
+import Product from "../models/Product.js";
+import cloudinary from "../config/cloudinary.js";
 import { successResponse, errorResponse } from "../constants/response.js";
+import { STATUS } from "../constants/httpStatus.js";
+import { MESSAGES } from "../constants/messages.js";
 
+const generateSlug = (text) =>
+  text.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, "").replace(/\s+/g, "-");
 
-// -------------------------------------------------------------
-// HELPER: Generate Slug
-// -------------------------------------------------------------
-const generateSlug = (text) => {
-  return text
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9\s-]/g, "")
-    .replace(/\s+/g, "-");
-};
-
-// -------------------------------------------------------------
-// HELPER: Build Full Image URL
-// -------------------------------------------------------------
-const buildImageUrl = (req, filename) => {
-  if (!filename) return null;
-  return `${process.env.BASE_URL}/uploads/${filename}`;
-};
-
-// -------------------------------------------------------------
-// CREATE CATEGORY
-// -------------------------------------------------------------
+// CREATE
 export const createCategory = async (req, res) => {
   try {
     const { Name, Description, IsActive } = req.body;
-    const Image = req.file ? req.file.filename : null;
 
-    if (!Name || !Image) {
+    if (!Name || !req.file) {
       return errorResponse(res, STATUS.BAD_REQUEST, MESSAGES.ALL_FIELDS_REQUIRED);
     }
 
     const Slug = generateSlug(Name);
 
-    // Check duplicates
-    const existingCategory = await Category.findOne({ $or: [{ Name }, { Slug }] });
-    if (existingCategory) {
+    const exists = await Category.findOne({ $or: [{ Name }, { Slug }] });
+    if (exists) {
       return errorResponse(res, STATUS.BAD_REQUEST, MESSAGES.CATEGORY.CATEGORY_EXIST);
     }
 
@@ -52,167 +28,71 @@ export const createCategory = async (req, res) => {
       Name,
       Slug,
       Description,
-      Image, // filename only
-      IsActive: IsActive !== undefined ? IsActive : true,
+      IsActive,
+      Image: {
+        url: req.file.path,
+        public_id: req.file.filename,
+      },
     });
 
-    return successResponse(
-      res,
-      STATUS.CREATED,
-      { ...category.toObject(), Image: buildImageUrl(req, category.Image) },
-      MESSAGES.CATEGORY.CATEGORY_CREATED
-    );
-
-  } catch (error) {
-    console.error("Create Category Error:", error);
+    return successResponse(res, STATUS.CREATED, category, MESSAGES.CATEGORY.CATEGORY_CREATED);
+  } catch (err) {
+    console.error(err);
     return errorResponse(res, STATUS.SERVER_ERROR, MESSAGES.SERVER_ERROR);
   }
 };
 
-// -------------------------------------------------------------
-// GET ALL CATEGORIES
-// -------------------------------------------------------------
+// GET ALL
 export const getCategories = async (req, res) => {
-  try {
-    const categories = await Category.find().sort({ createdAt: -1 });
-
-    const updated = categories.map((cat) => ({
-      ...cat.toObject(),
-      Image: buildImageUrl(req, cat.Image),
-    }));
-
-    return successResponse(
-      res,
-      STATUS.SUCCESS,
-      updated,
-      MESSAGES.CATEGORY.CATEGORY_FETCHED
-    );
-
-  } catch (error) {
-    console.error("Get Categories Error:", error);
-    return errorResponse(res, STATUS.SERVER_ERROR, MESSAGES.SERVER_ERROR);
-  }
+  const data = await Category.find().sort({ createdAt: -1 });
+  return successResponse(res, STATUS.SUCCESS, data, MESSAGES.CATEGORY.CATEGORY_FETCHED);
 };
 
-// -------------------------------------------------------------
-// GET CATEGORY BY ID
-// -------------------------------------------------------------
+// GET ONE
 export const getCategoryById = async (req, res) => {
-  try {
-    const category = await Category.findById(req.params.id);
-
-    if (!category) {
-      return errorResponse(res, STATUS.NOT_FOUND, MESSAGES.CATEGORY.CATEGORY_NOT_FOUND);
-    }
-
-    return successResponse(
-      res,
-      STATUS.SUCCESS,
-      { ...category.toObject(), Image: buildImageUrl(req, category.Image) },
-      MESSAGES.CATEGORY.CATEGORY_FETCHED
-    );
-
-  } catch (error) {
-    console.error("Get Category Error:", error);
-    return errorResponse(res, STATUS.SERVER_ERROR, MESSAGES.SERVER_ERROR);
+  const data = await Category.findById(req.params.id);
+  if (!data) {
+    return errorResponse(res, STATUS.NOT_FOUND, MESSAGES.CATEGORY.CATEGORY_NOT_FOUND);
   }
+  return successResponse(res, STATUS.SUCCESS, data, MESSAGES.CATEGORY.CATEGORY_FETCHED);
 };
 
-// -------------------------------------------------------------
-// UPDATE CATEGORY
-// -------------------------------------------------------------
+// UPDATE
 export const updateCategory = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { Name, Description, IsActive } = req.body;
-
-    const category = await Category.findById(id);
-    if (!category) {
-      return errorResponse(res, STATUS.NOT_FOUND, MESSAGES.CATEGORY.CATEGORY_NOT_FOUND);
-    }
-
-    // Update Name & Slug
-    if (Name && Name !== category.Name) {
-      const newSlug = generateSlug(Name);
-
-      // Check duplicate slug in other category
-      const exists = await Category.findOne({
-        Slug: newSlug,
-        _id: { $ne: id },
-      });
-
-      if (exists) {
-        return errorResponse(res, STATUS.BAD_REQUEST, "Category name already exists");
-      }
-
-      category.Name = Name;
-      category.Slug = newSlug;
-    }
-
-    // Update Description
-    if (Description !== undefined) category.Description = Description;
-
-    // Update Active Status
-    if (IsActive !== undefined) category.IsActive = IsActive;
-
-    // Update Image
-    if (req.file) {
-      const oldPath = path.join(process.cwd(), "uploads", category.Image);
-      if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
-
-      category.Image = req.file.filename;
-    }
-
-    await category.save();
-
-    return successResponse(
-      res,
-      STATUS.SUCCESS,
-      { ...category.toObject(), Image: buildImageUrl(req, category.Image) },
-      MESSAGES.CATEGORY.CATEGORY_UPDATED
-    );
-
-  } catch (error) {
-    console.error("Update Category Error:", error);
-    return errorResponse(res, STATUS.SERVER_ERROR, MESSAGES.SERVER_ERROR);
+  const category = await Category.findById(req.params.id);
+  if (!category) {
+    return errorResponse(res, STATUS.NOT_FOUND, MESSAGES.CATEGORY.CATEGORY_NOT_FOUND);
   }
+
+  if (req.body.Name && req.body.Name !== category.Name) {
+    category.Name = req.body.Name;
+    category.Slug = generateSlug(req.body.Name);
+  }
+
+  if (req.body.Description !== undefined) category.Description = req.body.Description;
+  if (req.body.IsActive !== undefined) category.IsActive = req.body.IsActive;
+
+  if (req.file) {
+    await cloudinary.uploader.destroy(category.Image.public_id);
+    category.Image = {
+      url: req.file.path,
+      public_id: req.file.filename,
+    };
+  }
+
+  await category.save();
+  return successResponse(res, STATUS.SUCCESS, category, MESSAGES.CATEGORY.CATEGORY_UPDATED);
 };
 
-// -------------------------------------------------------------
-// DELETE CATEGORY
-// -------------------------------------------------------------
+// DELETE
 export const deleteCategory = async (req, res) => {
-  try {
-    const category = await Category.findByIdAndDelete(req.params.id);
-
-    if (!category) {
-      return errorResponse(
-        res,
-        STATUS.NOT_FOUND,
-        MESSAGES.CATEGORY.CATEGORY_NOT_FOUND
-      );
-    }
-
-    // Delete category image file
-    if (category.Image) {
-      const filePath = path.join(process.cwd(), "uploads", category.Image);
-      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-    }
-
-    // -------------------------------------------------------------
-    // CASCADE DELETE PRODUCTS WITH SAME categorySlug
-    // -------------------------------------------------------------
-    await Product.deleteMany({ categorySlug: category.Slug });
-
-    return successResponse(
-      res,
-      STATUS.SUCCESS,
-      null,
-      MESSAGES.CATEGORY.CATEGORY_DELETED
-    );
-
-  } catch (error) {
-    console.error("Delete Category Error:", error);
-    return errorResponse(res, STATUS.SERVER_ERROR, MESSAGES.SERVER_ERROR);
+  const category = await Category.findByIdAndDelete(req.params.id);
+  if (!category) {
+    return errorResponse(res, STATUS.NOT_FOUND, MESSAGES.CATEGORY.CATEGORY_NOT_FOUND);
   }
+
+  await cloudinary.uploader.destroy(category.Image.public_id);
+  await Product.deleteMany({ categorySlug: category.Slug });
+
+  return successResponse(res, STATUS.SUCCESS, null, MESSAGES.CATEGORY.CATEGORY_DELETED);
 };
