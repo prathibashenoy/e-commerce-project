@@ -1,4 +1,4 @@
-import Product from "../models/Product.js";
+import Product from "../models/Products.js";
 import Category from "../models/Category.js";
 import cloudinary from "../config/cloudinary.js";
 import { successResponse, errorResponse } from "../constants/response.js";
