@@ -1,3 +1,4 @@
+// models/Category.js
 import mongoose from "mongoose";
 import AutoIncrementFactory from "mongoose-sequence";
 
@@ -29,9 +30,18 @@ const categorySchema = new mongoose.Schema(
       default: "",
     },
 
+    // ✅ UPDATED IMAGE STRUCTURE (BACKWARD COMPATIBLE)
     Image: {
-      url: { type: String, required: true },
-      public_id: { type: String, required: true },
+      url: {
+        type: String,
+        required: false, // 🔥 allow old data
+        default: "",
+      },
+      public_id: {
+        type: String,
+        required: false,
+        default: null,
+      },
     },
 
     IsActive: {

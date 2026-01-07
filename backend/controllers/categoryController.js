@@ -6,9 +6,13 @@ import { STATUS } from "../constants/httpStatus.js";
 import { MESSAGES } from "../constants/messages.js";
 
 const generateSlug = (text) =>
-  text.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, "").replace(/\s+/g, "-");
+  text
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-");
 
-// CREATE
+// ================= CREATE =================
 export const createCategory = async (req, res) => {
   try {
     const { Name, Description, IsActive } = req.body;
@@ -21,7 +25,11 @@ export const createCategory = async (req, res) => {
 
     const exists = await Category.findOne({ $or: [{ Name }, { Slug }] });
     if (exists) {
-      return errorResponse(res, STATUS.BAD_REQUEST, MESSAGES.CATEGORY.CATEGORY_EXIST);
+      return errorResponse(
+        res,
+        STATUS.BAD_REQUEST,
+        MESSAGES.CATEGORY.CATEGORY_EXIST
+      );
     }
 
     const category = await Category.create({
@@ -35,64 +43,134 @@ export const createCategory = async (req, res) => {
       },
     });
 
-    return successResponse(res, STATUS.CREATED, category, MESSAGES.CATEGORY.CATEGORY_CREATED);
+    return successResponse(
+      res,
+      STATUS.CREATED,
+      category,
+      MESSAGES.CATEGORY.CATEGORY_CREATED
+    );
   } catch (err) {
-    console.error(err);
+    console.error("Create category error:", err);
     return errorResponse(res, STATUS.SERVER_ERROR, MESSAGES.SERVER_ERROR);
   }
 };
 
-// GET ALL
+// ================= GET ALL =================
 export const getCategories = async (req, res) => {
-  const data = await Category.find().sort({ createdAt: -1 });
-  return successResponse(res, STATUS.SUCCESS, data, MESSAGES.CATEGORY.CATEGORY_FETCHED);
+  try {
+    const data = await Category.find().sort({ createdAt: -1 });
+    return successResponse(
+      res,
+      STATUS.SUCCESS,
+      data,
+      MESSAGES.CATEGORY.CATEGORY_FETCHED
+    );
+  } catch (err) {
+    console.error("Get categories error:", err);
+    return errorResponse(res, STATUS.SERVER_ERROR, MESSAGES.SERVER_ERROR);
+  }
 };
 
-// GET ONE
+// ================= GET ONE =================
 export const getCategoryById = async (req, res) => {
-  const data = await Category.findById(req.params.id);
-  if (!data) {
-    return errorResponse(res, STATUS.NOT_FOUND, MESSAGES.CATEGORY.CATEGORY_NOT_FOUND);
+  try {
+    const data = await Category.findById(req.params.id);
+    if (!data) {
+      return errorResponse(
+        res,
+        STATUS.NOT_FOUND,
+        MESSAGES.CATEGORY.CATEGORY_NOT_FOUND
+      );
+    }
+
+    return successResponse(
+      res,
+      STATUS.SUCCESS,
+      data,
+      MESSAGES.CATEGORY.CATEGORY_FETCHED
+    );
+  } catch (err) {
+    console.error("Get category error:", err);
+    return errorResponse(res, STATUS.SERVER_ERROR, MESSAGES.SERVER_ERROR);
   }
-  return successResponse(res, STATUS.SUCCESS, data, MESSAGES.CATEGORY.CATEGORY_FETCHED);
 };
 
-// UPDATE
+// ================= UPDATE =================
 export const updateCategory = async (req, res) => {
-  const category = await Category.findById(req.params.id);
-  if (!category) {
-    return errorResponse(res, STATUS.NOT_FOUND, MESSAGES.CATEGORY.CATEGORY_NOT_FOUND);
+  try {
+    const category = await Category.findById(req.params.id);
+    if (!category) {
+      return errorResponse(
+        res,
+        STATUS.NOT_FOUND,
+        MESSAGES.CATEGORY.CATEGORY_NOT_FOUND
+      );
+    }
+
+    if (req.body.Name && req.body.Name !== category.Name) {
+      category.Name = req.body.Name;
+      category.Slug = generateSlug(req.body.Name);
+    }
+
+    if (req.body.Description !== undefined)
+      category.Description = req.body.Description;
+
+    if (req.body.IsActive !== undefined)
+      category.IsActive = req.body.IsActive;
+
+    if (req.file) {
+      // ✅ SAFE DELETE (OLD DATA WON'T CRASH)
+      if (category.Image?.public_id) {
+        await cloudinary.uploader.destroy(category.Image.public_id);
+      }
+
+      category.Image = {
+        url: req.file.path,
+        public_id: req.file.filename,
+      };
+    }
+
+    await category.save();
+
+    return successResponse(
+      res,
+      STATUS.SUCCESS,
+      category,
+      MESSAGES.CATEGORY.CATEGORY_UPDATED
+    );
+  } catch (err) {
+    console.error("Update category error:", err);
+    return errorResponse(res, STATUS.SERVER_ERROR, MESSAGES.SERVER_ERROR);
   }
-
-  if (req.body.Name && req.body.Name !== category.Name) {
-    category.Name = req.body.Name;
-    category.Slug = generateSlug(req.body.Name);
-  }
-
-  if (req.body.Description !== undefined) category.Description = req.body.Description;
-  if (req.body.IsActive !== undefined) category.IsActive = req.body.IsActive;
-
-  if (req.file) {
-    await cloudinary.uploader.destroy(category.Image.public_id);
-    category.Image = {
-      url: req.file.path,
-      public_id: req.file.filename,
-    };
-  }
-
-  await category.save();
-  return successResponse(res, STATUS.SUCCESS, category, MESSAGES.CATEGORY.CATEGORY_UPDATED);
 };
 
-// DELETE
+// ================= DELETE =================
 export const deleteCategory = async (req, res) => {
-  const category = await Category.findByIdAndDelete(req.params.id);
-  if (!category) {
-    return errorResponse(res, STATUS.NOT_FOUND, MESSAGES.CATEGORY.CATEGORY_NOT_FOUND);
+  try {
+    const category = await Category.findByIdAndDelete(req.params.id);
+    if (!category) {
+      return errorResponse(
+        res,
+        STATUS.NOT_FOUND,
+        MESSAGES.CATEGORY.CATEGORY_NOT_FOUND
+      );
+    }
+
+    // ✅ SAFE CLOUDINARY DELETE
+    if (category.Image?.public_id) {
+      await cloudinary.uploader.destroy(category.Image.public_id);
+    }
+
+    await Product.deleteMany({ categorySlug: category.Slug });
+
+    return successResponse(
+      res,
+      STATUS.SUCCESS,
+      null,
+      MESSAGES.CATEGORY.CATEGORY_DELETED
+    );
+  } catch (err) {
+    console.error("Delete category error:", err);
+    return errorResponse(res, STATUS.SERVER_ERROR, MESSAGES.SERVER_ERROR);
   }
-
-  await cloudinary.uploader.destroy(category.Image.public_id);
-  await Product.deleteMany({ categorySlug: category.Slug });
-
-  return successResponse(res, STATUS.SUCCESS, null, MESSAGES.CATEGORY.CATEGORY_DELETED);
 };

@@ -1,3 +1,4 @@
+// models/Product.js
 import mongoose from "mongoose";
 
 const productSchema = new mongoose.Schema(
@@ -10,9 +11,18 @@ const productSchema = new mongoose.Schema(
       maxlength: 200,
     },
 
+    // ✅ UPDATED IMAGE STRUCTURE (BACKWARD COMPATIBLE)
     image: {
-      url: { type: String, required: true },
-      public_id: { type: String, required: true },
+      url: {
+        type: String,
+        required: false, // 🔥 allow existing products
+        default: "",
+      },
+      public_id: {
+        type: String,
+        required: false,
+        default: null,
+      },
     },
 
     categorySlug: {
@@ -44,6 +54,7 @@ const productSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// ✅ KEEP YOUR VIRTUAL (NO CHANGE)
 productSchema.virtual("category", {
   ref: "Category",
   localField: "categorySlug",
