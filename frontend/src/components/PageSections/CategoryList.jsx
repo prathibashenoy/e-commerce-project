@@ -8,8 +8,10 @@ const CategoryList = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const { data } = await axios.get("http://localhost:8080/api/category");
-        setCategories(data.data); // assuming successResponse({ data })
+        const { data } = await axios.get(
+          `${import.meta.env.VITE_API_URL}/api/category`
+        );
+        setCategories(data.data);
       } catch (error) {
         console.error("Error fetching categories:", error);
       }
@@ -20,12 +22,13 @@ const CategoryList = () => {
 
   return (
     <div className="space-y-10">
-      {categories.map((cat, index) => (
+      {categories.map((cat) => (
         <CategoryCard
           key={cat._id}
           title={cat.Name}
           description={cat.Description}
-          image={`/images/static-category-${index + 1}.jpg`} 
+          image={cat.Image?.url}   /* Cloudinary image */
+          slug={cat.Slug}
         />
       ))}
     </div>
