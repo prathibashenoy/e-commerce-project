@@ -1,3 +1,5 @@
+//controllers/categoryControllers.js
+
 import Category from "../models/Category.js";
 import Product from "../models/Products.js";
 import cloudinary from "../config/cloudinary.js";
@@ -37,8 +39,9 @@ export const createCategory = async (req, res) => {
       Slug,
       Description,
       IsActive,
-      Image: {
-        url: req.file.path,
+      // ✅ FIXED: lowercase image
+      image: {
+        url: req.file.path,          // Cloudinary URL
         public_id: req.file.filename,
       },
     });
@@ -119,12 +122,12 @@ export const updateCategory = async (req, res) => {
       category.IsActive = req.body.IsActive;
 
     if (req.file) {
-      // ✅ SAFE DELETE (OLD DATA WON'T CRASH)
-      if (category.Image?.public_id) {
-        await cloudinary.uploader.destroy(category.Image.public_id);
+      // ✅ FIXED: lowercase image
+      if (category.image?.public_id) {
+        await cloudinary.uploader.destroy(category.image.public_id);
       }
 
-      category.Image = {
+      category.image = {
         url: req.file.path,
         public_id: req.file.filename,
       };
@@ -156,9 +159,9 @@ export const deleteCategory = async (req, res) => {
       );
     }
 
-    // ✅ SAFE CLOUDINARY DELETE
-    if (category.Image?.public_id) {
-      await cloudinary.uploader.destroy(category.Image.public_id);
+    // ✅ FIXED: lowercase image
+    if (category.image?.public_id) {
+      await cloudinary.uploader.destroy(category.image.public_id);
     }
 
     await Product.deleteMany({ categorySlug: category.Slug });

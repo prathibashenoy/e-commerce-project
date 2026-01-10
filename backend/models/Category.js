@@ -1,60 +1,37 @@
-// models/Category.js
 import mongoose from "mongoose";
-import AutoIncrementFactory from "mongoose-sequence";
-
-const AutoIncrement = AutoIncrementFactory(mongoose);
 
 const categorySchema = new mongoose.Schema(
   {
-    CategoryID: { type: Number, index: true },
-
     Name: {
       type: String,
       required: true,
-      unique: true,
       trim: true,
-      minlength: 2,
-      maxlength: 100,
     },
-
     Slug: {
       type: String,
-      trim: true,
+      required: true,
       unique: true,
     },
-
     Description: {
       type: String,
-      trim: true,
-      maxlength: 500,
-      default: "",
     },
-
-    // ✅ UPDATED IMAGE STRUCTURE (BACKWARD COMPATIBLE)
-    Image: {
-      url: {
-        type: String,
-        required: false, // 🔥 allow old data
-        default: "",
-      },
-      public_id: {
-        type: String,
-        required: false,
-        default: null,
-      },
-    },
-
     IsActive: {
       type: Boolean,
       default: true,
     },
+    // ✅ LOWERCASE image (IMPORTANT)
+    image: {
+      url: {
+        type: String,
+        required: true,
+      },
+      public_id: {
+        type: String,
+        required: true,
+      },
+    },
   },
   { timestamps: true }
 );
-
-categorySchema.plugin(AutoIncrement, {
-  inc_field: "CategoryID",
-  start_seq: 1,
-});
 
 export default mongoose.model("Category", categorySchema);

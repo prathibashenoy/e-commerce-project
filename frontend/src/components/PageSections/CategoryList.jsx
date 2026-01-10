@@ -27,7 +27,7 @@ const CategoryList = () => {
           key={cat._id}
           title={cat.Name}
           description={cat.Description}
-          image={cat.Image?.url}   /* Cloudinary image */
+          image={cat.image}   /* Cloudinary image */
           slug={cat.Slug}
         />
       ))}

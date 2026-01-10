@@ -66,7 +66,7 @@ const ListCategories = () => {
               <tr key={cat._id} className="border-b hover:bg-gray-100">
                 <td className="p-3 border">
                   <img
-                    src={cat.Image}
+                    src={cat.image}
                     alt={cat.Name}
                     className="w-16 h-16 object-cover rounded"
                   />
