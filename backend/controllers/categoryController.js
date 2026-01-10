@@ -41,8 +41,8 @@ export const createCategory = async (req, res) => {
       IsActive,
       // ✅ FIXED: lowercase image
       image: {
-        url: req.file.path,          // Cloudinary URL
-        public_id: req.file.filename,
+        url: req.file.secure_url,          // Cloudinary URL
+        public_id: req.file.public_id,
       },
     });
 
@@ -128,8 +128,8 @@ export const updateCategory = async (req, res) => {
       }
 
       category.image = {
-        url: req.file.path,
-        public_id: req.file.filename,
+        url: req.file.secure_url,
+        public_id: req.file.public_id,
       };
     }
 
