@@ -8,7 +8,7 @@ const CategoryCard = ({ image, title, description, slug }) => {
       <div className="relative w-full max-w-3xl mx-auto mt-10 cursor-pointer">
         <img
           className="w-full h-64 md:h-80 rounded-2xl object-cover"
-          src={image}
+          src={image || "/placeholder.png"}
           alt={title}
         />
 
