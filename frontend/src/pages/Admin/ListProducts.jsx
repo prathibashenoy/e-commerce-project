@@ -76,9 +76,9 @@ const ListProducts = () => {
               products.map((product) => (
                 <tr key={product._id} className="hover:bg-gray-50">
                   <td className="border p-2 text-center">
-                    {product.image ? (
+                    {product.image ?.url ? (
                       <img
-                        src={product.image}
+                        src={product.image.url}
                         alt={product.name}
                         className="w-16 h-16 object-cover rounded"
                       />

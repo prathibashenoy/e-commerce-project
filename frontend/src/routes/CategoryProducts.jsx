@@ -51,7 +51,7 @@ const CategoryProducts = () => {
           >
             {/* Product Image */}
             <img
-              src={product.image || "/images/no-image.png"}
+              src={product.image?.url || "/images/no-image.png"}
               alt={product.name}
               className="w-full h-48 object-cover rounded"
             />
