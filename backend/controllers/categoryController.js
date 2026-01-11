@@ -1,5 +1,3 @@
-//controllers/categoryControllers.js
-
 import Category from "../models/Category.js";
 import Product from "../models/Products.js";
 import cloudinary from "../config/cloudinary.js";
@@ -7,6 +5,7 @@ import { successResponse, errorResponse } from "../constants/response.js";
 import { STATUS } from "../constants/httpStatus.js";
 import { MESSAGES } from "../constants/messages.js";
 
+// ================= SLUG GENERATOR =================
 const generateSlug = (text) =>
   text
     .toLowerCase()
@@ -14,18 +13,25 @@ const generateSlug = (text) =>
     .replace(/[^a-z0-9\s-]/g, "")
     .replace(/\s+/g, "-");
 
-// ================= CREATE =================
+// ================= CREATE CATEGORY =================
 export const createCategory = async (req, res) => {
   try {
     const { Name, Description, IsActive } = req.body;
 
     if (!Name || !req.file) {
-      return errorResponse(res, STATUS.BAD_REQUEST, MESSAGES.ALL_FIELDS_REQUIRED);
+      return errorResponse(
+        res,
+        STATUS.BAD_REQUEST,
+        MESSAGES.ALL_FIELDS_REQUIRED
+      );
     }
 
     const Slug = generateSlug(Name);
 
-    const exists = await Category.findOne({ $or: [{ Name }, { Slug }] });
+    const exists = await Category.findOne({
+      $or: [{ Name }, { Slug }],
+    });
+
     if (exists) {
       return errorResponse(
         res,
@@ -39,10 +45,9 @@ export const createCategory = async (req, res) => {
       Slug,
       Description,
       IsActive,
-      // ✅ FIXED: lowercase image
       image: {
-        url: req.file.secure_url,          // Cloudinary URL
-        public_id: req.file.public_id,
+        url: req.file.path,          // ✅ Cloudinary URL
+        public_id: req.file.filename // ✅ Cloudinary public_id
       },
     });
 
@@ -58,10 +63,11 @@ export const createCategory = async (req, res) => {
   }
 };
 
-// ================= GET ALL =================
+// ================= GET ALL CATEGORIES =================
 export const getCategories = async (req, res) => {
   try {
     const data = await Category.find().sort({ createdAt: -1 });
+
     return successResponse(
       res,
       STATUS.SUCCESS,
@@ -74,10 +80,11 @@ export const getCategories = async (req, res) => {
   }
 };
 
-// ================= GET ONE =================
+// ================= GET CATEGORY BY ID =================
 export const getCategoryById = async (req, res) => {
   try {
     const data = await Category.findById(req.params.id);
+
     if (!data) {
       return errorResponse(
         res,
@@ -98,10 +105,11 @@ export const getCategoryById = async (req, res) => {
   }
 };
 
-// ================= UPDATE =================
+// ================= UPDATE CATEGORY =================
 export const updateCategory = async (req, res) => {
   try {
     const category = await Category.findById(req.params.id);
+
     if (!category) {
       return errorResponse(
         res,
@@ -115,21 +123,23 @@ export const updateCategory = async (req, res) => {
       category.Slug = generateSlug(req.body.Name);
     }
 
-    if (req.body.Description !== undefined)
+    if (req.body.Description !== undefined) {
       category.Description = req.body.Description;
+    }
 
-    if (req.body.IsActive !== undefined)
+    if (req.body.IsActive !== undefined) {
       category.IsActive = req.body.IsActive;
+    }
 
     if (req.file) {
-      // ✅ FIXED: lowercase image
+      // 🔥 delete old image from Cloudinary
       if (category.image?.public_id) {
         await cloudinary.uploader.destroy(category.image.public_id);
       }
 
       category.image = {
-        url: req.file.secure_url,
-        public_id: req.file.public_id,
+        url: req.file.path,          // ✅ Cloudinary URL
+        public_id: req.file.filename // ✅ Cloudinary public_id
       };
     }
 
@@ -147,10 +157,11 @@ export const updateCategory = async (req, res) => {
   }
 };
 
-// ================= DELETE =================
+// ================= DELETE CATEGORY =================
 export const deleteCategory = async (req, res) => {
   try {
     const category = await Category.findByIdAndDelete(req.params.id);
+
     if (!category) {
       return errorResponse(
         res,
@@ -159,11 +170,12 @@ export const deleteCategory = async (req, res) => {
       );
     }
 
-    // ✅ FIXED: lowercase image
+    // 🔥 delete image from Cloudinary
     if (category.image?.public_id) {
       await cloudinary.uploader.destroy(category.image.public_id);
     }
 
+    // 🔥 delete related products
     await Product.deleteMany({ categorySlug: category.Slug });
 
     return successResponse(
