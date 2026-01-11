@@ -1,21 +1,14 @@
-import multer from "multer";
-import { CloudinaryStorage } from "multer-storage-cloudinary";
-import cloudinary from "../config/cloudinary.js";
+//config/cloudinary.js
 
-const storage = new CloudinaryStorage({
-  cloudinary,
-  params: (req) => ({
-    folder: req.baseUrl.includes("product")
-      ? "ecommerce/products"
-      : "ecommerce/categories",
-    allowed_formats: ["jpg", "jpeg", "png", "webp"],
-    resource_type: "image",
-  }),
+import { v2 as cloudinary } from "cloudinary";
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-export const upload = multer({
-  storage,
-  limits: {
-    fileSize: 2 * 1024 * 1024, // 2MB
-  },
-});
+console.log("Cloudinary connected:", process.env.CLOUDINARY_CLOUD_NAME);
+
+
+export default cloudinary;
