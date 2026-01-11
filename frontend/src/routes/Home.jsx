@@ -41,7 +41,7 @@ function Home() {
           <CategoryCard
             key={item._id}
             slug={item.Slug}
-            image={item.Image || `/images/static-category-${index + 1}.jpg`}
+            image={item.image || `/images/static-category-${index + 1}.jpg`}
             title={item.Name}
             description={item.Description}
           />
