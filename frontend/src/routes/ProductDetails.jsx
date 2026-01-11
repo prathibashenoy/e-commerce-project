@@ -35,7 +35,7 @@ const ProductDetails = () => {
         _id: product._id,
         name: product.name,
         price: product.price,
-        image: product.image,
+        image: product.image?.url,
       })
     );
     alert("Added to cart!");
@@ -49,7 +49,7 @@ const ProductDetails = () => {
       {/* Image */}
       <div className="md:w-1/2">
         <img
-          src={product.image}
+          src={product.image?.url}
           alt={product.name}
           className="w-full h-96 object-cover rounded"
         />
