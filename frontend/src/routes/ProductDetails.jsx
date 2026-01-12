@@ -35,7 +35,7 @@ const ProductDetails = () => {
         _id: product._id,
         name: product.name,
         price: product.price,
-        image: product.image,
+        image: product.image?.url, // ✅ store URL only
       })
     );
     alert("Added to cart!");

@@ -17,7 +17,7 @@ const MyOrders = () => {
           },
         }
       );
-      setOrders(res.data);
+      setOrders(res.data.data );
     };
 
     fetchOrders();
