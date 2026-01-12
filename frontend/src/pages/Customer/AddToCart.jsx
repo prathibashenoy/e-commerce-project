@@ -37,7 +37,11 @@ const AddToCart = () => {
           {cartItems.map((item) => (
             <div key={item._id} className="border-b py-4 flex gap-4">
               <img
-                src={item.image?.url}
+                src={
+                      typeof item.image === "string"
+                      ? item.image
+                      : item.image?.url
+                    }
                 alt={item.name}
                 className="w-32 h-32 object-cover rounded"
               />
