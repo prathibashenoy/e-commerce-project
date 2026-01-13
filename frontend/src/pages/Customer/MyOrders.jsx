@@ -5,24 +5,37 @@ import { API_URL } from "../../config";
 
 const MyOrders = () => {
   const { token } = useAuth();
-  const [orders, setOrders] = useState([]);
+  const [orders, setOrders] = useState([]); // always array
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchOrders = async () => {
-      const res = await axios.get(
-        `${API_URL}/api/orders/my-orders`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      setOrders(res.data.data );
+      try {
+        const res = await axios.get(
+          `${API_URL}/api/orders/my-orders`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        // ✅ SAFETY CHECK
+        setOrders(Array.isArray(res.data?.data) ? res.data.data : []);
+      } catch (error) {
+        console.error("Failed to fetch orders:", error);
+        setOrders([]);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    fetchOrders();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    if (token) fetchOrders();
+  }, [token]);
+
+  if (loading) {
+    return <p className="text-center mt-10">Loading orders...</p>;
+  }
 
   return (
     <div className="max-w-5xl mx-auto p-6">
@@ -37,16 +50,21 @@ const MyOrders = () => {
             className="border p-4 mb-4 rounded shadow"
           >
             <p className="font-semibold">
-              Order Date: {new Date(order.createdAt).toLocaleDateString()}
+              Order Date:{" "}
+              {order.createdAt
+                ? new Date(order.createdAt).toLocaleDateString()
+                : "N/A"}
             </p>
+
             <p>Total: ₹{order.totalAmount}</p>
 
-            <ul className="mt-2">
-              {order.items.map((item, idx) => (
-                <li key={idx}>
-                  {item.name} × {item.quantity}
-                </li>
-              ))}
+            <ul className="mt-2 space-y-1">
+              {Array.isArray(order.items) &&
+                order.items.map((item, idx) => (
+                  <li key={idx}>
+                    {item.name} × {item.quantity}
+                  </li>
+                ))}
             </ul>
           </div>
         ))
