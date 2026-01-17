@@ -1,71 +1,106 @@
 // utils/sendEmail.js
+import Mailjet from "node-mailjet";
 import nodemailer from "nodemailer";
 import { orderSuccessTemplate } from "./emailTemplates.js";
 
-const transporter = nodemailer.createTransport({
+// ==============================
+// Mailjet Setup
+// ==============================
+const mailjet = Mailjet.apiConnect(
+  process.env.MAILJET_API_KEY,
+  process.env.MAILJET_SECRET_KEY
+);
+
+// Optional: test Mailjet connection at startup
+(async () => {
+  try {
+    await mailjet.get("user").request();
+    console.log("✅ Mailjet connection successful");
+  } catch (error) {
+    console.error("❌ Mailjet connection failed:", error.message);
+  }
+})();
+
+// ==============================
+// Gmail SMTP Setup (Fallback)
+// ==============================
+const gmailTransporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
   port: 587,
-  secure: false, // IMPORTANT for Render
+  secure: false,
   auth: {
     user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS, // Gmail App Password
+    pass: process.env.EMAIL_PASS,
   },
 });
 
-// Optional: verify transporter on startup
-transporter.verify((error, success) => {
-  if (error) {
-    console.error("❌ Email transporter error:", error.message);
-  } else {
-    console.log("✅ Email transporter ready");
-  }
+gmailTransporter.verify((err) => {
+  if (err) console.error("❌ Gmail transporter error:", err.message);
+  else console.log("✅ Gmail transporter ready");
 });
 
 // ==============================
-// Order Success Email
+// Generic sendEmail function
 // ==============================
-export const sendOrderSuccessEmail = async (user, order) => {
-  try {
-    await transporter.sendMail({
-      from: `"Pudava" <${process.env.EMAIL_USER}>`,
-      to: user.email,
-      subject: "Order Confirmed 🎉",
-      html: orderSuccessTemplate({
-        name: user.username || user.name || "Customer",
-        orderId: order._id,
-        items: order.items || [],
-        total: order.totalAmount,
-      }),
-    });
+const sendEmail = async ({ to, subject, html }) => {
+  const message = {
+    From: {
+      Email: process.env.MAILJET_SENDER_EMAIL,
+      Name: "Pudava",
+    },
+    To: [{ Email: to }],
+    Subject: subject,
+    HTMLPart: html,
+  };
 
-    console.log("📧 Order confirmation email sent to:", user.email);
+  try {
+    await mailjet.post("send", { version: "v3.1" }).request({
+      Messages: [message],
+    });
+    console.log(`📧 Email sent via Mailjet to: ${to}`);
     return true;
-  } catch (error) {
-    console.error("❌ Order email failed:", error.message);
-    return false;
+  } catch (err) {
+    console.warn(`⚠️ Mailjet failed, trying Gmail SMTP: ${err.message}`);
+    try {
+      await gmailTransporter.sendMail({
+        from: `"${message.From.Name}" <${message.From.Email}>`,
+        to,
+        subject,
+        html,
+      });
+      console.log(`📧 Email sent via Gmail to: ${to}`);
+      return true;
+    } catch (err2) {
+      console.error(`❌ Both Mailjet and Gmail failed: ${err2.message}`);
+      return false;
+    }
   }
 };
 
 // ==============================
-// Profile Completed Email
+// Exported email functions
 // ==============================
-export const sendProfileCompletedEmail = async (user) => {
-  try {
-    await transporter.sendMail({
-      from: `"Pudava" <${process.env.EMAIL_USER}>`,
-      to: user.email,
-      subject: "Profile Completed 🎉",
-      html: `
-        <h2>Hello ${user.username}</h2>
-        <p>Your profile has been successfully completed.</p>
-        <p>You can now access your dashboard.</p>
-      `,
-    });
+export const sendOrderSuccessEmail = async (user, order) => {
+  return sendEmail({
+    to: user.email,
+    subject: "Order Confirmed 🎉",
+    html: orderSuccessTemplate({
+      name: user.username || user.name || "Customer",
+      orderId: order._id,
+      items: order.items || [],
+      total: order.totalAmount,
+    }),
+  });
+};
 
-    console.log("📧 Profile completed email sent to:", user.email);
-    return true;
-  } catch (error) {
-    console.error("❌ Profile email failed:", error.message);
-    return false;
-  }
+export const sendProfileCompletedEmail = async (user) => {
+  return sendEmail({
+    to: user.email,
+    subject: "Profile Completed 🎉",
+    html: `
+      <h2>Hello ${user.username || user.name || "Customer"}</h2>
+      <p>Your profile has been successfully completed.</p>
+      <p>You can now access your dashboard.</p>
+    `,
+  });
 };
