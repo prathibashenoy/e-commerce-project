@@ -7,6 +7,7 @@ import {
   FaBoxes,
   FaShoppingCart,
   FaTachometerAlt,
+  FaUsers 
 } from "react-icons/fa";
 
 export const AdminSidebar = () => {
@@ -54,6 +55,12 @@ export const AdminSidebar = () => {
                 <Link to="/admin/list-products" className="flex items-center gap-3 hover:text-yellow-400">
                   <FaBoxes /> List Products
                 </Link>
+              </li>
+
+              <li>
+                <Link to="/admin/users"  className="flex items-center gap-3 hover:text-yellow-400">
+               <FaUsers /> Users
+               </Link>
               </li>
 
               <li>
