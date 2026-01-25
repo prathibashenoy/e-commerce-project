@@ -28,6 +28,7 @@ import EditCategory from "./pages/Admin/EditCategory";
 import EditProduct from "./pages/Admin/EditProduct";
 import Orders from "./pages/Admin/Orders";
 import AdminOrders from "./pages/Admin/AdminOrders";
+import AdminUsers from "./pages/Admin/Users";
 
 /* CUSTOMER */
 import CustomerLayout from "./routes/CustomerLayout";
@@ -75,6 +76,7 @@ const App = () => {
             <Route path="list-products" element={<ListProducts />} />
             <Route path="edit-category/:id" element={<EditCategory />} />
             <Route path="edit-product/:id" element={<EditProduct />} />
+            <Route path="Users" element={<AdminUsers />} />
             <Route path="orders" element={<Orders />} />
           </Route>
         </Route>
